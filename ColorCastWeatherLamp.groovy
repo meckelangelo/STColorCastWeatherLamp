@@ -556,7 +556,7 @@ def	pageWeatherTriggers() {
 				],
 				required:		false,
 				multiple:		true
-			)			
+			)
 		}	 
 	}
 }
@@ -950,11 +950,8 @@ def alwaysOnDisplay() {
 	
     if (alwaysOnSwitch instanceof Object && alwaysOnSwitch.switch == "off")
     {
-    	for (hue in hues)
-        {
-        	unschedule(alwaysOnDisplay)
-        	hue.off()
-        }
+        unschedule(alwaysOnDisplay)
+        hue*.off()
     }
 	else if (state.colors.size() > 1) {
 		debug('canSchedule(): ' + canSchedule())
@@ -1069,7 +1066,7 @@ def displayWeather(newCycle) {
 				} else {
                 	def weatherId = hour.weather.id[0]
 			
-                    if (rainEnabled && weatherId >= 200 && weatherId < 600)
+                    if (rainEnabled && ((weatherId >= 200 && weatherId < 600) || weatherId == 701))
                     {
                         willRain = true
                     }
@@ -1107,7 +1104,7 @@ def displayWeather(newCycle) {
 					}
 
 					if (windEnabled && (hour.wind_speed >= windTrigger || hour.wind_gust >= windTrigger + 5)) windy = true //Compare to user defined value for wind speed.
-					if (cloudyEnabled && hour.clouds >= cloudPercentTrigger) cloudy = true //Compare to user defined value for wind speed.
+					if (!willRain && !willSnow && !willSleet && cloudyEnabled && hour.clouds >= cloudPercentTrigger) cloudy = true //Compare to user defined value for wind speed.
 					if (dewPointEnabled && hour.dew_point >= dewPointTrigger) humid = true //Compare to user defined value for wind speed.
 				}
 			}
@@ -1125,11 +1122,11 @@ def displayWeather(newCycle) {
 			}
 
 			if (response.alerts) { //See if Alert data is included in response
-				response.alerts.each { //If it is iterate through all Alerts
-					def thisAlert=it.title;
+                response.alerts.each { //If it is iterate through all Alerts
+					def thisAlert=it.event;
 					debug thisAlert
 					alertFlash.each{ //Iterate through all user specified alert types
-						if (thisAlert.toLowerCase().indexOf(it)>=0) { //If this user specified alert type matches this alert response
+						if (thisAlert instanceof Object && thisAlert.toLowerCase().indexOf(it)>=0) { //If this user specified alert type matches this alert response
 							debug ("ALERT: "+it, true)
 							weatherAlert=true //Is there currently a weather alert
 						}
