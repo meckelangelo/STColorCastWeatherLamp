@@ -51,14 +51,18 @@ def	 pageMain() {
 	) {
 	
 		state.hslWhite 	= [0, 0]
-		state.hslBlue 	= [72, 100]
-		state.hslGreen 	= [39, 100]
-		state.hslYellow = [25, 90]
-		state.hslOrange = [19, 100]
-		state.hslPurple = [84, 100]
-		state.hslPink 	= [100, 55]
+		state.hslBlue 	= [68, 100]
+        state.hslAqua   = [56, 100]
+        state.hslTeal	= [45, 100]
+		state.hslGreen 	= [36, 100]
+        state.hslLime	= [22, 100]
+		state.hslYellow = [14, 100]
+		state.hslOrange = [10, 100]
 		state.hslRed 	= [0, 100]
-        state.colorList	= ["Blue","Purple","Red","Pink","Orange","Yellow","Green","White"]
+		state.hslPurple = [78, 100]
+		state.hslMagenta = [88, 100]
+		state.hslPink 	= [100, 60]
+        state.colorList	= ["White","Blue","Aqua","Teal","Green","Lime","Yellow","Orange","Red","Purple","Magenta","Pink"]
 		
 
 		section("App Status") {
@@ -194,7 +198,7 @@ def	pageDisplayTriggers() {
 		}
         
 		section("Always On") {
-			paragraph "When enabled, the light(s) will remain on continuosly while the app is active. If more than one weather condition is met, the light(s) will cycle through all applicable colors.\n\nWeather alerts will NOT be displayed when this option is enabled."
+			paragraph "When enabled, the light(s) will remain on continuosly while the app is active. If more than one weather condition is met, the light(s) will cycle through all applicable colors.\n\nWeather alerts will be displayed as a separate state when this option is enabled."
 			input (
 				name:			"alwaysOn", 
 				type:			"bool", 
@@ -381,7 +385,7 @@ def	pageWeatherTriggers() {
 				type:			"enum", 
 				title: 			"Color",
 				options:		state.colorList,
-				defaultValue:	"Purple",
+				defaultValue:	"Aqua",
 				required:		true,
 				multiple:		false
 			)
@@ -414,7 +418,7 @@ def	pageWeatherTriggers() {
 				type:			"enum", 
 				title: 			"Color",
 				options:		state.colorList,
-				defaultValue:	"Pink",
+				defaultValue:	"Purple",
 				required:		true,
 				multiple:		false
 			)
@@ -437,7 +441,7 @@ def	pageWeatherTriggers() {
 				type:			"enum", 
 				title: 			"Color",
 				options:		state.colorList,
-				defaultValue:	"Pink",
+				defaultValue:	"Magenta",
 				required:		true,
 				multiple:		false
 			)
@@ -468,7 +472,7 @@ def	pageWeatherTriggers() {
 				type:			"enum", 
 				title: 			"Color",
 				options:		state.colorList,
-				defaultValue:	"White",
+				defaultValue:	"Teal",
 				required:		true,
 				multiple:		false
 			)
@@ -548,7 +552,7 @@ def	pageWeatherTriggers() {
 			input (
 				name:			"alertFlash", 
 				type:			"enum", 
-				title: 			"Flash Lights For...",
+				title: 			"Show alerts for...",
 				options:		[
 					"warning":"Warnings", 
 					"watch":"Watches", 
@@ -556,6 +560,15 @@ def	pageWeatherTriggers() {
 				],
 				required:		false,
 				multiple:		true
+			)
+			input (
+				name:			"alertColor", 
+				type:			"enum", 
+				title: 			"Color",
+				options:		state.colorList,
+				defaultValue:	"White",
+				required:		true,
+				multiple:		false
 			)
 		}	 
 	}
@@ -942,8 +955,18 @@ def alwaysOnDisplay() {
 	debug ('state.colors.size: ' + state.colors.size())
 	debug ('state.colorIndex: ' + state.colorIndex)
 	
+    int delay = 5
+    
 	if (state.colors.size() > 0) {
-		sendcolor(state.colors[state.colorIndex])
+    	if (state.colors[state.colorIndex] == "Alert")
+        {
+        	delay = 0
+        	sendcolor(alertColor, true)
+        }
+        else
+        {
+        	sendcolor(state.colors[state.colorIndex], false)
+        }
 		state.colorIndex = state.colorIndex + 1
 		if (state.colorIndex >= state.colors.size()) state.colorIndex = 0
 	}
@@ -951,11 +974,11 @@ def alwaysOnDisplay() {
     if (alwaysOnSwitch instanceof Object && alwaysOnSwitch.switch == "off")
     {
         unschedule(alwaysOnDisplay)
-        hue*.off()
+        hues*.off()
     }
 	else if (state.colors.size() > 1) {
 		debug('canSchedule(): ' + canSchedule())
-        runIn(5, alwaysOnDisplay)
+        runIn(delay, alwaysOnDisplay)
 		//schedule("0 0/2 * * * ?", alwaysOnDisplay)
 		debug ("Multiple weather conditions exist. Scheduling color cycling.", true)
 	} else {
@@ -1000,7 +1023,7 @@ def displayWeather(newCycle) {
 		def d = new Date()
 		if ((d.getTime() - state.forecastTime) / 1000 / 60 > 30) {
 			try {unschedule()} catch(err){debug("-Unschedule failed.", true)}
-			schedule("0 0/15 * * * ?", getWeather)
+			schedule("0 0/60 * * * ?", getWeather)
 			getWeather()
 		}
 		
@@ -1167,6 +1190,11 @@ def displayWeather(newCycle) {
 				state.colors.push(cloudPercentColor)
 				debug ("Cloudy - " + cloudPercentColor, true)
 			}
+            if (weatherAlert)
+            {
+            	state.colors.push("Alert")
+                debug ("Alert - " + alertColor, true)
+            }
 		}
 
 		//If the colors array is empty, assign the "all clear" color
@@ -1174,10 +1202,8 @@ def displayWeather(newCycle) {
 		state.colors.unique()
 		debug state.colors
 			 
-		int duration = 3 //The amount of time to leave each color on
-		int maxDisplay = 18
-
-		int flashDelay = 500
+		int duration = 5 //The amount of time to leave each color on
+		int maxDisplay = 25
 
 		duration *= 1000
 		maxDisplay *= 1000
@@ -1187,24 +1213,18 @@ def displayWeather(newCycle) {
 			duration = Math.floor(maxDisplay / displayCount)
 		}
 
-		def iterations = 10 //The number of times to show each color
-		if (weatherAlert) {
-			//When there's an active weather alert, shorten the duration that each color is shown but show the color multiple times. This will cause individual colors to flash when there is a weather alert
-			iterations = Math.floor(duration / (flashDelay * 2))
-			duration = flashDelay
-		}
-
 		if (!alwaysOn) {
 			state.colors.each { //Iterate over each color
 				for (int i = 0; i<iterations; i++) {
-					sendcolor(it) //Turn light on with specified color
+                	if (it == "Alert")
+                    {
+                    	sendcolor(alertColor, true)
+                    }
+                    else
+                    {
+						sendcolor(it, false) //Turn light on with specified color
+                    }
 					pause(duration) //leave the light on for the specified time
-					if (weatherAlert) {
-						//If theres a weather alert, turn off the light for the same amount of time it was on
-						//When a weather alert is active, each color will be looped x times, creating the blinking effect by turning the light on then off x times
-						hues.off()
-						pause(duration)
-					}
 				}
 			}
 
@@ -1220,7 +1240,7 @@ def displayWeather(newCycle) {
 
 
 // Light Control
-def sendcolor(color) {
+def sendcolor(color, flash) {
 	//Initialize the hue and saturation
 	def hueColor = 0
 	def saturation = 100
@@ -1231,7 +1251,7 @@ def sendcolor(color) {
 	} else if (brightnessLevel>100) {
 		brightnessLevel=100
 	}
-	
+    
 	def hsl = getColorDefinitions(color)
 	
 	hueColor = hsl[0]
@@ -1241,16 +1261,47 @@ def sendcolor(color) {
 
 	//Change the color of the light
 	try {
-    	for (hue in hues)
+    	hues*.on()
+        debug(hues[0].currentSaturation)
+        if (hues[0].currentSaturation > saturation)
         {
-            if (hue.switch == "off")
+            hues*.setSaturation(saturation)
+            hues*.setHue(hueColor)
+        }
+        else
+        {
+            hues*.setHue(hueColor)
+            hues*.setSaturation(saturation)
+        }
+		hues*.setLevel(brightnessLevel)
+        
+        if (flash)
+        {
+        	int flashDelay = 500
+            pause(flashDelay)
+            
+        	int i = 0
+            while (i < 5)
             {
-                hue.on()
+            	// If the saturation of the chosen alert color is 0 (they picked white), change the brightness
+				if (saturation == 0)
+                {
+                	hues*.level(brightnessLevel / 2)
+                    pause(flashDelay)
+                    hues*.level(brightnessLevel)
+                    pause(flashDelay)
+                }
+                // Otherwise if the chosen color is not white, alternate their chosen color with white
+                else
+                {
+                    hues*.setSaturation(0)
+                    pause(flashDelay)
+                    hues*.setSaturation(saturation)
+                    pause(flashDelay)
+                }
+                i++
             }
         }
-		hues*.setHue(hueColor)
-		hues*.setSaturation(saturation)
-		hues*.setLevel(brightnessLevel)
 	} catch (err) {
 		debug(err)
 		debug("There was a problem changing bulb color", true)
