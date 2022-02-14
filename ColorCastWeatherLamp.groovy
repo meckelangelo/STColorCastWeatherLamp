@@ -52,17 +52,17 @@ def	 pageMain() {
 	
 		state.hslWhite 	= [0, 0]
 		state.hslBlue 	= [68, 100]
-        state.hslAqua   = [56, 100]
-        state.hslTeal	= [45, 100]
+        	state.hslAqua   = [56, 100]
+        	state.hslTeal	= [45, 100]
 		state.hslGreen 	= [36, 100]
-        state.hslLime	= [22, 100]
+        	state.hslLime	= [22, 100]
 		state.hslYellow = [14, 100]
 		state.hslOrange = [10, 100]
 		state.hslRed 	= [0, 100]
 		state.hslPurple = [78, 100]
 		state.hslMagenta = [88, 100]
 		state.hslPink 	= [100, 60]
-        state.colorList	= ["White","Blue","Aqua","Teal","Green","Lime","Yellow","Orange","Red","Purple","Magenta","Pink"]
+        	state.colorList	= ["White","Blue","Aqua","Teal","Green","Lime","Yellow","Orange","Red","Purple","Magenta","Pink"]
 		
 
 		section("App Status") {
