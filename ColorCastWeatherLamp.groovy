@@ -797,26 +797,36 @@ def getWeatherTriggers() {
 			outputList.add(windColor + "\t- wind " + ((forecastRange == "Current conditions") ? "is" : "will be") + " " + windTrigger + "mph or greater")
 		}
 		
-		if (alwaysOn == false && (alertFlash instanceof Object) && alertFlash.size() > 0) {
-			def alertoutputList = ""
+		if ((alertFlash instanceof Object) && alertFlash.size() > 0) {
+			def alertoutputList = []
 			alertFlash.each{ //Iterate through all user specified alert types
 				
 				switch (it) {
 					case "warning":
-						alertoutputList += "\n	 Warnings"
+						alertoutputList.add("Warnings")
 						break
 				   	case "watch":
-						alertoutputList += "\n	 Watches"
-							break
+						alertoutputList.add("Watches")
+                    	break
 				   	case "advisory":
-						alertoutputList += "\n	 Advisories"
-							break
+						alertoutputList.add("Advisories")
+                    	break
 				}
 				
 			}
 			
-			if (alertoutputList != "") outputList.add("\nFlash lights for" + alertoutputList)
-			
+			if (alertoutputList.size() > 0)
+            {
+            	def j = 0;
+            	def alertoutput = ""
+                alertoutputList.each {
+            		if (j++ > 0) alertoutput += ", "
+                    alertoutput += it
+                }
+                
+                alertoutput = "Flashing " + alertColor + " with White - " + alertoutput
+            	outputList.add(alertoutput)
+            }
 		}
 	} else {
 		outputList.add("Choose weather conditions to display")
@@ -1262,7 +1272,6 @@ def sendcolor(color, flash) {
 	//Change the color of the light
 	try {
     	hues*.on()
-        debug(hues[0].currentSaturation)
         if (hues[0].currentSaturation > saturation)
         {
             hues*.setSaturation(saturation)
