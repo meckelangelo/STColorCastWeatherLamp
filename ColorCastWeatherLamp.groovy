@@ -368,19 +368,6 @@ def pageWeatherTriggers() {
                 required:       false
             )
             input (
-                name:           "rainAmount", 
-                type:           "enum", 
-                title:          "Trigger for...",
-                defaultValue:   "Any Amount",
-                options: [
-                    "Any Amount",
-                    "Light Rain",       //0.017
-                    "Moderate Rain",    //0.1
-                    "Heavy Rain"        //0.4
-                ],
-                required:       true
-            )
-            input (
                 name:           "rainColor", 
                 type:           "enum", 
                 title:          "Color",
@@ -403,16 +390,6 @@ def pageWeatherTriggers() {
                 defaultValue:   false,
                 required:       false
             )
-            if (forecastRange != "Current conditions") {
-                input (
-                    name:           "snowTrigger", 
-                    type:           "enum", 
-                    title:          "Minimum Accumulation (inches)",
-                    defaultValue:   "Any Amount",
-                    options:        ["Any Amount", "0.1", "0.2", "0.3", "0.4", "0.5", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
-                    required:       true
-                )
-            }
             input (
                 name:           "snowColor", 
                 type:           "enum", 
@@ -761,20 +738,10 @@ def getWeatherTriggers() {
         }
         
         if (rainEnabled) {
-            if (forecastRange == "Current conditions") {
-                outputList.add(rainColor + "\t- it's raining")
-            } else {
-                outputList.add(rainColor + "\t- " + ((rainAmount == "Any Amount") ? "any amount of rain" : rainAmount) + " is expected")
-            }
+            outputList.add(rainColor + "\t- it's raining")
         }
         if (snowEnabled) {
-            if (forecastRange == "Current conditions") {
-                outputList.add(snowColor + "\t- it's snowing")
-            } else if (snowTrigger == "Any Amount") {
-                outputList.add(snowColor + "\t- " + snowTrigger + " of snow is expected")
-            } else {
-                outputList.add(snowColor + "\t- " + snowTrigger + "\" or more of snow is expected")
-            }
+            outputList.add(snowColor + "\t- it's snowing")
         }
         
         if (sleetEnabled) {
@@ -1045,28 +1012,15 @@ def displayWeather(newCycle) {
         }
 
         //Initialize weather events
-        def willRain=false;
-        def willSnow=false;
-        def willSleet=false;
-        def windy=false;
+        def willRain = false
+        def willSnow = false
+        def willSleet = false
+        def windy = false
         def tempLow
         def tempHigh
-        def cloudy=false;
-        def humid=false;
-        def weatherAlert=false
-        double snowAccumulation = 0.0
-        
-        def rainTrigger
-        switch(rainAmount) {
-            case "Light Rain":
-                rainTrigger = 0.017
-                break
-            case "Moderate Rain":
-                rainTrigger = 0.1
-                break
-            default:
-                rainTrigger = 0
-        }
+        def cloudy = false
+        def humid = false
+        def weatherAlert = false
 
         def response = state.weatherData
 
@@ -1124,7 +1078,8 @@ def displayWeather(newCycle) {
 				if (lowTempEnabled) {
 					if (tempMinType == 'Actual') {
 						if (tempLow == null || tempLow > hour.temp) tempLow = hour.temp //Compare the stored low temp to the current iteration temp. If it's lower overwrite the stored low with this temp
-					} else {
+					}
+                    else {
 						if (tempLow == null || tempLow > hour.feels_like) tempLow = hour.feels_like //Compare the stored low temp to the current iteration temp. If it's lower overwrite the stored low with this temp
 					}
 				}
@@ -1132,13 +1087,22 @@ def displayWeather(newCycle) {
 				if (highTempEnabled) {
 					if (tempMaxType == 'Actual') {
 						if (tempHigh == null || tempHigh < hour.temp) tempHigh = hour.temp //Compare the stored low temp to the current iteration temp. If it's lower overwrite the stored low with this temp
-					} else {
+					}
+                    else {
 						if (tempHigh == null || tempHigh < hour.feels_like) tempHigh = hour.feels_like //Compare the stored low temp to the current iteration temp. If it's lower overwrite the stored low with this temp
 					}
 				}
 
 				if (windEnabled && (hour.wind_speed >= windTrigger || hour.wind_gust >= windTrigger + 5)) windy = true //Compare to user defined value for wind speed.
-				if (!willRain && !willSnow && !willSleet && cloudyEnabled && hour.clouds >= cloudPercentTrigger) cloudy = true //Compare to user defined value for wind speed.
+                
+				if (!willRain && !willSnow && !willSleet && cloudyEnabled && hour.clouds >= cloudPercentTrigger) { //Compare to user defined value for wind speed.
+                	cloudy = true
+                }
+                else if (willRain || willSnow || willSleet) //No need to show the cloudy color if it's precipitating, that can be assumed
+                {
+                	cloudy = false
+                }
+                
 				if (dewPointEnabled && hour.dew_point >= dewPointTrigger) humid = true //Compare to user defined value for wind speed.
             }
 
@@ -1156,11 +1120,11 @@ def displayWeather(newCycle) {
             }
 
             //Add color strings to the colors array to be processed later
-            if (lowTempEnabled && tempLow<=tempMinTrigger.floatValue()) {
+            if (lowTempEnabled && tempLow <= tempMinTrigger.floatValue()) {
                 state.colors.push(tempMinColor)
                 debug ("Cold - " + tempMinColor, true)
             }
-            if (highTempEnabled && tempHigh>=tempMaxTrigger.floatValue()) {
+            if (highTempEnabled && tempHigh >= tempMaxTrigger.floatValue()) {
                 state.colors.push(tempMaxColor)
                 debug ("Hot - " + tempMaxColor, true)
             }
