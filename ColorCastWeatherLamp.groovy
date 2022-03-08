@@ -932,37 +932,42 @@ def alwaysOnDisplay() {
     debug ('state.colors.size: ' + state.colors.size())
     debug ('state.colorIndex: ' + state.colorIndex)
     
-    int delay = 5
-    
-    if (state.colors.size() > 0) {
-        if (state.colors[state.colorIndex] == "Alert")
-        {
-            delay = 0
-            sendcolor(alertColor, true)
-        }
-        else
-        {
-            sendcolor(state.colors[state.colorIndex], false)
-        }
-        state.colorIndex = state.colorIndex + 1
-        if (state.colorIndex >= state.colors.size()) state.colorIndex = 0
-    }
-    
     if (alwaysOnSwitch instanceof Object && alwaysOnSwitch.switch == "off")
     {
         unschedule(alwaysOnDisplay)
         hues*.off()
     }
-    else if (state.colors.size() > 1) {
-        debug('canSchedule(): ' + canSchedule())
-        runIn(delay, alwaysOnDisplay)
-        //schedule("0 0/2 * * * ?", alwaysOnDisplay)
-        debug ("Multiple weather conditions exist. Scheduling color cycling.", true)
-    } else {
-        debug ("Single weather condition. Color cycling disabled until forecast refresh", true)
-    }
+    else
+    {
+        int delay = 5
     
-    debug ('state.colorIndex: ' + state.colorIndex)
+        if (state.colors.size() > 0) {
+            if (state.colors[state.colorIndex] == "Alert")
+            {
+                delay = 0
+                sendcolor(alertColor, true)
+            }
+            else
+            {
+                sendcolor(state.colors[state.colorIndex], false)
+            }
+            state.colorIndex = state.colorIndex + 1
+            if (state.colorIndex >= state.colors.size()) state.colorIndex = 0
+        }
+
+        if (state.colors.size() > 1) {
+            debug('canSchedule(): ' + canSchedule())
+            runIn(delay, alwaysOnDisplay)
+            //schedule("0 0/2 * * * ?", alwaysOnDisplay)
+            debug ("Multiple weather conditions exist. Scheduling color cycling.", true)
+        }
+        else
+        {
+            debug ("Single weather condition. Color cycling disabled until forecast refresh", true)
+        }
+
+        debug ('state.colorIndex: ' + state.colorIndex)
+    }
 }
 
 // Weather Processing
@@ -1309,6 +1314,7 @@ def switchHandler(evt) {
     }
     else if (evt.value == "off")
     {
+    	unschedule(alwaysOnDisplay)
         hues*.off()
     }
 }
