@@ -265,7 +265,7 @@ def pageWeatherTriggers() {
                 type:           "enum", 
                 title:          "Color",
                 options:        state.colorList,
-                defaultValue:   "Green",
+                defaultValue:   "Lime",
                 required:       false,
                 multiple:       false
             )            
@@ -349,7 +349,7 @@ def pageWeatherTriggers() {
                 type:           "enum", 
                 title:          "Color",
                 options:        state.colorList,
-                defaultValue:   "Red",
+                defaultValue:   "Orange",
                 required:       true,
                 multiple:       false
             )
@@ -480,7 +480,7 @@ def pageWeatherTriggers() {
                 type:           "enum", 
                 title:          "Color",
                 options:        state.colorList,
-                defaultValue:   "Orange",
+                defaultValue:   "Green",
                 required:       true,
                 multiple:       false
             )
@@ -543,9 +543,16 @@ def pageWeatherTriggers() {
                 type:           "enum", 
                 title:          "Color",
                 options:        state.colorList,
-                defaultValue:   "White",
+                defaultValue:   "Red",
                 required:       true,
                 multiple:       false
+            )
+            input (
+            	name:			"flashEnabled",
+                type:           "bool", 
+                title:          "Flash with White",
+                defaultValue:   false,
+                required:       false
             )
         }    
     }
@@ -791,7 +798,12 @@ def getWeatherTriggers() {
                     alertoutput += it
                 }
                 
-                alertoutput = "Flashing " + alertColor + " with White - " + alertoutput
+                if (flashEnabled) {
+                	alertoutput = "Alert " + alertColor + " flashing with White - " + alertoutput
+                }
+                else {
+                	alertoutput = "Alert " + alertColor + " - " + alertoutput
+                }
                 outputList.add(alertoutput)
             }
         }
@@ -944,8 +956,10 @@ def alwaysOnDisplay() {
         if (state.colors.size() > 0) {
             if (state.colors[state.colorIndex] == "Alert")
             {
-                delay = 0
-                sendcolor(alertColor, true)
+            	if (flashEnabled) {
+                	delay = 0
+                }
+                sendcolor(alertColor, flashEnabled)
             }
             else
             {
@@ -1187,7 +1201,7 @@ def displayWeather(newCycle) {
                 for (int i = 0; i<iterations; i++) {
                     if (it == "Alert")
                     {
-                        sendcolor(alertColor, true)
+                        sendcolor(alertColor, flashEnabled)
                     }
                     else
                     {
@@ -1245,7 +1259,7 @@ def sendcolor(color, flash) {
         
         if (flash)
         {
-            int flashDelay = 500
+            int flashDelay = 1000
             pause(flashDelay)
             
             int i = 0
