@@ -1164,7 +1164,10 @@ def displayWeather(newCycle) {
         }
 
         //If the colors array is empty, assign the "all clear" color
-        if (state.colors.size() == 0 && allClearEnabled) state.colors.push(allClearColor)
+        if ((state.colors.size() == 0 && allClearEnabled) || (state.colors.size() == 1 && weatherAlert))
+        {
+        	state.colors.push(allClearColor)
+        }
         state.colors.unique()
         debug state.colors
              
