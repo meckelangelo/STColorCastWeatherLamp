@@ -944,7 +944,7 @@ def alwaysOnDisplay() {
     debug ('state.colors.size: ' + state.colors.size())
     debug ('state.colorIndex: ' + state.colorIndex)
     
-    if (alwaysOnSwitch instanceof Object && alwaysOnSwitch.switch == "off")
+    if (alwaysOnSwitch instanceof Object && alwaysOnSwitch.currentValue('switch').contains('off'))
     {
         unschedule(alwaysOnDisplay)
         hues*.off()
